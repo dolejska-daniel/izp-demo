@@ -2,7 +2,7 @@
 CC = gcc
 CFLAGS = -std=c11 -Wall -Wextra -Werror -pedantic
 
-.PHONY: clean
+.PHONY: clean pack run
 
 main: main.c
 	$(CC) $(CFLAGS) $^ -o "$@"
@@ -12,3 +12,6 @@ clean:
 
 pack:
 	tar -czvf odevzdani.tar.gz ./*
+
+run: main
+	./main
