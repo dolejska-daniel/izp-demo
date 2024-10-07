@@ -1,39 +1,56 @@
 #include<stdio.h>
+#include<stdlib.h>
 
-#define ARRAY_SIZE 10
+void print_items(int *numbers, int current_size) {
+    printf("(%d)", current_size);
+    if (current_size == 0) { 
+        printf(" There are no items.\n");
+        return;
+    }
+    for (int i = 0; i < current_size; i++) {
+        printf(" %d", numbers[i]);
+    }
+    printf("\n");
+}
 
-int main(void)
+void add_item(int *numbers, int max_size, int *current_size) {
+    if (max_size <= *current_size) {
+        printf("Cannot add any more items.\n");
+        return;
+    }
+    printf("Add item to %d. place: ", *current_size + 1);
+    scanf("%d", &numbers[(*current_size)++]);
+}
+
+void remove_last_item(int *current_size) {
+    printf("Removing item %d\n", *current_size);
+    (*current_size)--;
+}
+
+int main(int argc, char *argv[])
 {
-    char string[] = "hello!";
-    printf("%s\n", string);
-
-    for (int index = 0; index < 6; index++) {
-        char current_char = string[index];
-        if (current_char >= 'a' && current_char <= 'z') {
-            current_char -= 32;
-        }
-        printf("string[%d] = %c (%d)\n", index, current_char, current_char);
+    for (int arg_index = 0; arg_index < argc; arg_index++)
+    {
+        printf("argv[%d] = %s\n", arg_index, argv[arg_index]);
     }
 
-    return 0;
-    // const int ARRAY_SIZE = 5;
-    int numbers[ARRAY_SIZE] = {0};
+    if (argc < 2)
+    {
+        printf("Wrong argument count, expected 2 at least\n");
+        return 1;
+    }
+
+    int size = atoi(argv[1]);
+    int *numbers = malloc(size * sizeof(int));
     int number_count = 0;
 
-    numbers[number_count++] = 10;
-    // number_count == 1
-    numbers[number_count++] = 30;
-    numbers[number_count++] = 50;
-    for (int index = 0; index < number_count; index++) {
-        printf("numbers[%d] = %d\n", index, numbers[index]);
-    }
+    print_items(numbers, number_count);
+    add_item(numbers, size, &number_count);
+    add_item(numbers, size, &number_count);
+    add_item(numbers, size, &number_count);
+    print_items(numbers, number_count);
+    remove_last_item(&number_count);
+    print_items(numbers, number_count);
 
-    printf("\n");
-    number_count--;
-    number_count--;
-    for (int index = 0; index < number_count; index++) {
-        printf("numbers[%d] = %d\n", index, numbers[index]);
-    }
-
-    printf("\n");
+    free(numbers);
 }
