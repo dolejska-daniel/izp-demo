@@ -1,0 +1,32 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "main",
+            "type": "shell",
+            "command": "make",
+            "args": [
+                "--always-make"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "main (debug)",
+            "type": "shell",
+            "command": "make",
+            "args": [
+                "--always-make",
+                "main-debug"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": "$gcc"
+        }
+    ]
+}
