@@ -1,9 +1,9 @@
-#include<stdio.h>
-#include<stdlib.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 void print_items(FILE *destination, int *numbers, int max_size, int current_size) {
     fprintf(destination, "(%d/%d)", current_size, max_size);
-    if (current_size == 0) { 
+    if (current_size == 0) {
         fprintf(destination, " There are no items.\n");
         return;
     }
@@ -31,38 +31,31 @@ void remove_last_item(int *current_size) {
     (*current_size)--;
 }
 
-int *list_ctor(int max_size)
-{
+int *list_ctor(int max_size) {
     return malloc(max_size * sizeof(int));
 }
 
-void list_dtor(int **list)
-{
+void list_dtor(int **list) {
     free(*list);
     *list = NULL;
 }
 
-void load_from_file(FILE *source, int **numbers, int *max_size, int *current_size)
-{
+void load_from_file(FILE *source, int **numbers, int *max_size, int *current_size) {
     *current_size = 0;
     int number_count = 0;
     fscanf(source, "(%d/%d)", &number_count, max_size);
     *numbers = list_ctor(*max_size);
-    for (int item_index = 0; item_index < number_count; item_index++)
-    {
+    for (int item_index = 0; item_index < number_count; item_index++) {
         add_item_from(source, *numbers, *max_size, current_size);
     }
 }
 
-int main(int argc, char *argv[])
-{
-    for (int arg_index = 0; arg_index < argc; arg_index++)
-    {
+int main(int argc, char *argv[]) {
+    for (int arg_index = 0; arg_index < argc; arg_index++) {
         printf("argv[%d] = %s\n", arg_index, argv[arg_index]);
     }
 
-    if (argc < 2)
-    {
+    if (argc < 2) {
         printf("Wrong argument count, expected 2 at least\n");
         return 1;
     }
