@@ -43,13 +43,13 @@ void add_item_from(FILE *source, ListPtr list) {
 
 void prompt_add_item(ListPtr list) {
     print_debug("loading next item from stdin");
-    fprintf(stderr, "Add item to %d. place: ", list->item_count + 1);
+    fprintf(stdout, "Add item to %d. place: ", list->item_count + 1);
     add_item_from(stdin, list);
 }
 
 void remove_last_item(ListPtr list) {
     print_debug_list(list);
-    fprintf(stderr, "Removing %d. item\n", list->item_count + 1);
+    fprintf(stdout, "Removing %d. item\n", list->item_count + 1);
     list->item_count--;
 }
 
@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (argc < 2) {
-        fprintf(stderr, "Wrong argument count, expected 2 at least\n");
+        fprintf(stdout, "Wrong argument count, expected 2 at least\n");
         return 1;
     }
 
