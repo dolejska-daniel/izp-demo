@@ -22,12 +22,12 @@ void add_item_from(FILE *source, int *numbers, int max_size, int *current_size) 
 }
 
 void prompt_add_item(int *numbers, int max_size, int *current_size) {
-    printf("Add item to %d. place: ", *current_size + 1);
+    fprintf(stderr, "Add item to %d. place: ", *current_size + 1);
     add_item_from(stdin, numbers, max_size, current_size);
 }
 
 void remove_last_item(int *current_size) {
-    printf("Removing item %d\n", *current_size);
+    fprintf(stderr, "Removing %d. item\n", *current_size);
     (*current_size)--;
 }
 
@@ -52,11 +52,11 @@ void load_from_file(FILE *source, int **numbers, int *max_size, int *current_siz
 
 int main(int argc, char *argv[]) {
     for (int arg_index = 0; arg_index < argc; arg_index++) {
-        printf("argv[%d] = %s\n", arg_index, argv[arg_index]);
+        fprintf(stderr, "argv[%d] = %s\n", arg_index, argv[arg_index]);
     }
 
     if (argc < 2) {
-        printf("Wrong argument count, expected 2 at least\n");
+        fprintf(stderr, "Wrong argument count, expected 2 at least\n");
         return 1;
     }
 
