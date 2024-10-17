@@ -1,4 +1,3 @@
-
 CC = gcc
 CFLAGS = -std=c11 -Wall -Wextra -Werror -pedantic
 
@@ -6,6 +5,9 @@ CFLAGS = -std=c11 -Wall -Wextra -Werror -pedantic
 
 main: main.c
 	$(CC) $(CFLAGS) $^ -o "$@"
+
+main-debug: main.c
+	$(CC) $(CFLAGS) -DDEBUG_PRINT=1 $^ -o "$@"
 
 clean:
 	rm -Rf *.o main odevzdani.tar.gz
