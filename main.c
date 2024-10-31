@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -12,6 +13,8 @@
     printf_debug("item_count=%d, capacity=%d", (((ListPtr)list)->item_count), (((ListPtr)list)->capacity));
 
 #define FILEPATH "list.txt"
+
+enum ActivityOptions { OptionPrint = 1, OptionAdd, OptionRemoveLast, OptionQuit };
 
 typedef struct {
     int capacity;
@@ -49,6 +52,10 @@ void prompt_add_item(ListPtr list) {
 
 void remove_last_item(ListPtr list) {
     print_debug_list(list);
+    if (list->item_count == 0) {
+        print_debug("nothing to remove from empty list");
+        return;
+    }
     fprintf(stdout, "Removing %d. item\n", list->item_count + 1);
     list->item_count--;
 }
@@ -86,6 +93,38 @@ void load_from_file(FILE *source, ListPtr *list) {
     }
 }
 
+void print_menu(void) {
+    printf("Select an action:\n");
+    printf("  %d) Print current list\n", OptionPrint);
+    printf("  %d) Add an time to list\n", OptionAdd);
+    printf("  %d) Remove last item\n", OptionRemoveLast);
+    printf("  %d) Quit\n", OptionQuit);
+}
+
+bool prompt_menu_option(ListPtr list) {
+    int option;
+    scanf("%d", &option);
+    switch (option) {
+    case OptionPrint: {
+        print_items(stdout, list);
+        break;
+    }
+    case OptionAdd:
+        prompt_add_item(list);
+        break;
+    case OptionRemoveLast:
+        remove_last_item(list);
+        break;
+    case OptionQuit:
+        return false;
+    default:
+        printf("Unknown option %d. Try again?\n", option);
+        break;
+    }
+
+    return true;
+}
+
 int main(int argc, char *argv[]) {
     for (int arg_index = 0; arg_index < argc; arg_index++) {
         printf_debug("argv[%d] = %s", arg_index, argv[arg_index]);
@@ -110,13 +149,11 @@ int main(int argc, char *argv[]) {
         load_from_file(source, &list);
     }
 
-    print_items(stdout, list);
-    prompt_add_item(list);
-    prompt_add_item(list);
-    prompt_add_item(list);
-    print_items(stdout, list);
-    remove_last_item(list);
-    print_items(stdout, list);
+    bool is_running = true;
+    while (is_running) {
+        print_menu();
+        is_running = prompt_menu_option(list);
+    }
 
     printf_debug("opening file: %s", FILEPATH);
     FILE *destination = fopen(FILEPATH, "w");
