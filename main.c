@@ -22,6 +22,8 @@ typedef struct {
     int *items;
 } List, *ListPtr;
 
+void list_expand(ListPtr list);
+
 void print_items(FILE *destination, ListPtr list) {
     fprintf(destination, "(%d/%d)", list->item_count, list->capacity);
     if (list->item_count == 0) {
@@ -36,9 +38,7 @@ void print_items(FILE *destination, ListPtr list) {
 
 void add_item_from(FILE *source, ListPtr list) {
     if (list->capacity <= list->item_count) {
-        fprintf(stdout, "Cannot add any more items.\n");
-        print_debug_list(list);
-        return;
+        list_expand(list);
     }
     fscanf(source, "%d", &list->items[list->item_count++]);
     print_debug_list(list);
@@ -61,7 +61,7 @@ void remove_last_item(ListPtr list) {
 }
 
 ListPtr list_ctor(int capacity) {
-    ListPtr list = malloc(sizeof(List));
+    ListPtr list = (ListPtr)malloc(sizeof(List));
     printf_debug("created new list of size %d at %p", capacity, (void *)list);
     if (list == NULL) {
         perror("could not create List");
@@ -79,6 +79,14 @@ void list_dtor(ListPtr *list) {
     free((*list)->items);
     free(*list);
     *list = NULL;
+}
+
+void list_expand(ListPtr list) {
+    list->capacity *= 2;
+    list->items = realloc(list->items, sizeof(int) * list->capacity);
+    if (list->items == NULL) {
+        print_debug("list expansion failed!");
+    }
 }
 
 void load_from_file(FILE *source, ListPtr *list) {
