@@ -82,23 +82,29 @@ void list_dtor(ListPtr *list) {
 }
 
 void list_expand(ListPtr list) {
-    list->capacity *= 2;
-    list->items = realloc(list->items, sizeof(int) * list->capacity);
-    if (list->items == NULL) {
-        print_debug("list expansion failed!");
+    int new_capacity = list->capacity * 2;
+    printf_debug("expanding list, capacity=%d, new_capacity=%d", list->capacity, new_capacity);
+    int *new_items = realloc(list->items, sizeof(int) * new_capacity);
+    if (new_items == NULL) {
+        print_debug("list expansion failed");
+    } else {
+        list->capacity = new_capacity;
+        list->items = new_items;
     }
 }
 
-void load_from_file(FILE *source, ListPtr *list) {
+ListPtr load_from_file(FILE *source) {
     int item_count = 0, capacity = 0;
     fscanf(source, "(%d/%d)", &item_count, &capacity);
     printf_debug("loaded from file: item_count=%d, capacity=%d", item_count, capacity);
 
-    *list = list_ctor(capacity);
+    ListPtr list = list_ctor(capacity);
     for (int item_index = 0; item_index < item_count; item_index++) {
         printf_debug("loading item %d", item_index);
-        add_item_from(source, *list);
+        add_item_from(source, list);
     }
+
+    return list;
 }
 
 void print_menu(void) {
@@ -138,23 +144,31 @@ int main(int argc, char *argv[]) {
         printf_debug("argv[%d] = %s", arg_index, argv[arg_index]);
     }
 
-    if (argc < 2) {
-        fprintf(stdout, "Wrong argument count, expected 2 at least\n");
+    ListPtr list;
+    if (argc > 2) {
+        fprintf(stdout, "Wrong argument count, expected 1. Usage: %s [initial_list_size]\n", argv[0]);
         return 1;
-    }
-
-    int size = atoi(argv[1]);
-    ListPtr list = list_ctor(size);
-    if (list == NULL) {
-        print_debug("list allocation failed");
-        return 1;
-    }
-
-    printf_debug("opening file: %s", FILEPATH);
-    FILE *source = fopen(FILEPATH, "r");
-    if (source != NULL) {
-        printf_debug("file opened, reading from: %s", FILEPATH);
-        load_from_file(source, &list);
+    } else if (argc == 2) {
+        // initial size specified, create new list
+        int size = atoi(argv[1]);
+        list = list_ctor(size);
+        if (list == NULL) {
+            print_debug("list allocation failed");
+            return 1;
+        }
+    } else {
+        printf_debug("opening file: %s", FILEPATH);
+        FILE *source = fopen(FILEPATH, "r");
+        if (source != NULL) {
+            printf_debug("file opened, reading from: %s", FILEPATH);
+            list = load_from_file(source);
+            fclose(source);
+        } else {
+            // could not open file
+            fprintf(stdout, "Could not open existing list from %s. Create new list using: %s [initial_list_size]\n",
+                    FILEPATH, argv[0]);
+            return 1;
+        }
     }
 
     bool is_running = true;
