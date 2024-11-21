@@ -9,8 +9,11 @@ main: main.c
 main-debug: main.c
 	$(CC) $(CFLAGS) -DDEBUG_PRINT=1 $^ -o "$@"
 
+btree: btree.c
+	$(CC) $(CFLAGS) $^ -o "$@"
+
 clean:
-	rm -Rf *.o main odevzdani.tar.gz
+	rm -Rf *.o main btree odevzdani.tar.gz
 
 pack:
 	tar -czvf odevzdani.tar.gz ./*
