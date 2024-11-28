@@ -1,5 +1,6 @@
 main
 main-debug*
 btree
+list
 *.o
 *.txt
