@@ -9,6 +9,9 @@ CFLAGS = -std=c11 -Werror -Wall -Wextra -pedantic
 main: main.c
 	$(CC) $(CFLAGS) $^ -o "$@"
 
+main-debug: main.c
+	$(CC) $(CFLAGS) $^ -DDEBUG_PRINT -g -o "$@"
+
 run: main
 	./main
 

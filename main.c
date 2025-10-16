@@ -1,24 +1,37 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef DEBUG_PRINT
+#define debug_printf(format, ...)                                                                                      \
+    fprintf(stderr, "%s:%d | %s | " format "\n", __FILE__, __LINE__, __func__, __VA_ARGS__)
+#else
+#define debug_printf(format, ...)                                                                                      \
+    while (0) {                                                                                                        \
+        fprintf(stderr, format, __VA_ARGS__);                                                                          \
+    }
+#endif
+#define debug_print(message) debug_printf("%s", message)
+
 #define ARRAY_CAPACITY 10
 #define FILE_NAME "list.txt"
 #define FILE_ARRAY_COUNT_TEMPLATE "There are %d/%d items.\n"
 
-struct ItemArray {
+typedef struct {
     int *items;
     int capacity;
     int currentCount;
-};
+} ItemArray, *ItemArrayPtr;
 
-void print_contents(FILE *file, struct ItemArray *array) {
+void print_contents(FILE *file, ItemArrayPtr array) {
+    debug_print("Printing");
     fprintf(file, FILE_ARRAY_COUNT_TEMPLATE, array->currentCount, array->capacity);
     for (int index = 0; index < array->currentCount; index++) {
         fprintf(file, "item[%d] = %d\n", index, array->items[index]);
     }
 }
 
-void load_contents(FILE *file, struct ItemArray *array) {
+void load_contents(FILE *file, ItemArrayPtr array) {
+    debug_print("Loading contents from file");
     fscanf(file, FILE_ARRAY_COUNT_TEMPLATE, &(*array).currentCount, &array->capacity);
     array->items = malloc(sizeof(*array->items) * array->capacity);
     if (array->items == NULL) {
@@ -29,12 +42,14 @@ void load_contents(FILE *file, struct ItemArray *array) {
 
     for (int line = 0; line < array->currentCount; line++) {
         int scanned = fscanf(file, "item[%*d] = %d\n", &array->items[line]);
-        printf("scanf() == %d\n", scanned);
+        debug_printf("scanf() == %d", scanned);
     }
 }
 
-void add_item(struct ItemArray *array, int value) {
+void add_item(ItemArrayPtr array, int value) {
+    debug_printf("Adding item: %d", value);
     if (array->capacity <= array->currentCount + 1) {
+        debug_print("Resizing array");
         array->items = realloc(array->items, sizeof(*array->items) * array->capacity * 2);
     }
 
@@ -43,15 +58,17 @@ void add_item(struct ItemArray *array, int value) {
 
 int main(void) {
     FILE *file;
-    struct ItemArray numbers = {
+    ItemArray numbers = {
         .items = NULL,
         .capacity = 0,
         .currentCount = 0,
     };
 
+    debug_print("Loading from file");
     file = fopen(FILE_NAME, "r");
     if (file != NULL) {
         load_contents(file, &numbers);
+        debug_print("Closing file");
         fclose(file);
     } else {
         return 1;
@@ -62,6 +79,8 @@ int main(void) {
 
     file = fopen(FILE_NAME, "w");
     print_contents(file, &numbers);
+
+    debug_print("Closing file");
     fclose(file);
 
     free(numbers.items);
