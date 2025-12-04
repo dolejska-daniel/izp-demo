@@ -1,7 +1,19 @@
+#include "processing.h"
+#include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+typedef struct {
+    bool success;
+    int error_id;
+} Result;
+
+#define RESULT_OK                                                                                                      \
+    (Result) {                                                                                                         \
+        .success = true, .error_id = 0,                                                                                \
+    }
 
 #ifdef DEBUG_PRINT
 #define debug_printf(format, ...)                                                                                      \
@@ -20,6 +32,7 @@
 
 #define COMMAND_ADD "add"
 #define COMMAND_REMOVE "remove"
+#define COMMAND_PROCESS "process"
 
 typedef struct {
     int *items;
@@ -61,13 +74,24 @@ void add_item(ItemArrayPtr array, int value) {
     array->items[array->currentCount++] = value;
 }
 
+void process_items_with_lib(ItemArrayPtr array) {
+    process_item(&array->items[0]);
+}
+
+void add_item_from_input(ItemArrayPtr array) {
+    int value;
+    printf("Input a value to add: ");
+    scanf("%d", &value);
+    add_item(array, value);
+}
+
 void remove_items(ItemArrayPtr array, int count) {
     array->currentCount = array->currentCount < count ? 0 : array->currentCount - count;
 }
 
-bool find_minMax(ItemArrayPtr array, int *min, int *max) {
+Result find_minMax(ItemArrayPtr array, int *min, int *max) {
     if (array->currentCount == 0) {
-        return false;
+        return RESULT_OK;
     }
 
     *min = array->items[0];
@@ -82,15 +106,34 @@ bool find_minMax(ItemArrayPtr array, int *min, int *max) {
         }
     }
 
-    return true;
+    return RESULT_OK;
 }
 
-int main(int argc, char *argv[]) {
+typedef void (*action)(ItemArrayPtr);
+
+typedef struct {
+    char name[10];
+    char desc[40];
+    action callback;
+} ActionDefinition;
+
+typedef struct {
+    ActionDefinition items[10];
+    int length;
+} ActionDefinitions;
+
+int main(void) {
     FILE *file;
     ItemArray numbers = {
         .items = NULL,
         .capacity = 0,
         .currentCount = 0,
+    };
+
+    ActionDefinitions actions = {
+        .items = {{.name = COMMAND_ADD, .desc = "Adds item to the array", .callback = &add_item_from_input},
+                  {.name = COMMAND_PROCESS, .desc = "Process with library", .callback = &process_items_with_lib}},
+        .length = 2,
     };
 
     debug_print("Loading from file");
@@ -103,24 +146,38 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    if (argc != 3) {
-        fprintf(stderr, "Usage: %s <command> <value>\n", argv[0]);
-        return 1;
-    }
+    char input[100];
+    do {
+        print_contents(stdout, &numbers);
+        for (int actionIndex = 0; actionIndex < actions.length; actionIndex++) {
+            ActionDefinition action = actions.items[actionIndex];
+            printf("%9s) %s\n", action.name, action.desc);
+        }
+        printf("%9s) %s\n", "exit", "Closes the program");
+        scanf("%99s", input);
+        bool handled = false;
+        for (int actionIndex = 0; actionIndex < actions.length; actionIndex++) {
+            ActionDefinition action = actions.items[actionIndex];
+            if (strcmp(action.name, input) == 0) {
+                action.callback(&numbers);
+                handled = true;
+                break;
+            }
+        }
+        if (handled) {
+            continue;
+        }
+        if (strcmp("exit", input) == 0) {
+            break;
 
-    debug_printf("argv[1] == %s;", argv[1]);
-    debug_printf("argv[2] == %s;", argv[2]);
-    if (strcmp(COMMAND_ADD, argv[1]) == 0) {
-        add_item(&numbers, atoi(argv[2]));
-    } else if (strcmp(COMMAND_REMOVE, argv[1]) == 0) {
-        remove_items(&numbers, atoi(argv[2]));
-    } else {
-        fprintf(stderr, "Unknown command: %s\n", argv[1]);
-        return 1;
-    }
+        } else {
+            fprintf(stderr, "Unknown command: %s\n", input);
+            continue;
+        }
+    } while (true);
 
     int min = 0, max = 0;
-    if (find_minMax(&numbers, &min, &max)) {
+    if (find_minMax(&numbers, &min, &max).success) {
         printf("min = %d, max = %d\n", min, max);
     }
 
