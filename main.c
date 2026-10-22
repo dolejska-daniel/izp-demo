@@ -5,7 +5,7 @@
 #define debug_printf(format, ...)                                                                                      \
     fprintf(stderr, "%s:%d | %s | " format "\n", __FILE__, __LINE__, __func__, __VA_ARGS__)
 
-#define debug_print(format) fprintf(stderr, "%s\n", format)
+#define debug_print(format) debug_printf("%s", format)
 #else
 #define debug_printf(...)                                                                                              \
     while (0) {                                                                                                        \
@@ -17,18 +17,34 @@
 
 #define CAPACITY 5
 
-void printNumbers(FILE *dst, int *numbers, int count, int capacity) {
+struct tree_node_t {
+    int value;
+    struct tree_node_t *left;
+    struct tree_node_t *right;
+};
+
+typedef struct {
+    int *items;
+    int count;
+    int capacity;
+} Numbers;
+typedef Numbers *NumbersRef;
+
+void printNumbers(FILE *dst, Numbers array) {
     debug_print("printing contents");
-    fprintf(dst, "(%d/%d) ", count, capacity);
-    for (int index = 0; index < count; index++) {
-        fprintf(dst, "%d ", numbers[index]);
+    fprintf(dst, "(%d/%d) ", array.count, array.capacity);
+    for (int index = 0; index < array.count; index++) {
+        fprintf(dst, "%d ", array.items[index]);
     }
     fprintf(dst, "\n");
 }
 
-void addNumber(int *numbers, int *count, int numberToAdd) {
-    debug_printf("adding number %d, current count = %d", numberToAdd, *count);
-    numbers[(*count)++] = numberToAdd;
+void addNumber(NumbersRef array, int numberToAdd) {
+    debug_printf("adding number %d, current count = %d", numberToAdd, array->count);
+    // (*array).count;
+    // array[0].count;
+    // array->count;
+    array->items[array->count++] = numberToAdd;
 }
 
 int main(void) {
@@ -37,9 +53,21 @@ int main(void) {
 
     debug_print("STARTING");
 
-    int numberCount = 0;
-    // int numbers[CAPACITY] = {0};
-    int capacity = CAPACITY;
+    Numbers array = {
+        .capacity = CAPACITY,
+        .items = NULL,
+        .count = 0,
+    };
+
+    Numbers *arrayRef = &array;        // struct NumbersArray *
+    Numbers **arrayRefRef = &arrayRef; // struct NumbersArray **
+    arrayRef = *arrayRefRef;           // struct NumbersArray *
+    array = *arrayRef;                 // struct NumbersArray
+
+    printf("&array      = %p\n", (void *)&array);
+    printf("arrayRef    = %p\n", (void *)arrayRef);
+    printf("&arrayRef   = %p\n", (void *)&arrayRef);
+    printf("arrayRefRef = %p\n", (void *)arrayRefRef);
 
     debug_printf("opening file '%s'", contentFilePath);
     contentFile = fopen(contentFilePath, "r");
@@ -49,24 +77,24 @@ int main(void) {
     }
 
     debug_print("loading head from file");
-    fscanf(contentFile, "(%d/%d) ", &numberCount, &capacity);
+    fscanf(contentFile, "(%d/%d) ", &array.count, &array.capacity);
 
     debug_print("loading items from file");
-    int *numbers = malloc(capacity * sizeof(int));
-    if (numbers == NULL) {
+    array.items = malloc(array.capacity * sizeof(int));
+    if (array.items == NULL) {
         fprintf(stderr, "Allocation failed\n");
         fclose(contentFile);
         return 1;
     }
 
-    for (int numberIndex = 0; numberIndex < numberCount; numberIndex++) {
-        fscanf(contentFile, "%d", &numbers[numberIndex]);
+    for (int numberIndex = 0; numberIndex < array.count; numberIndex++) {
+        fscanf(contentFile, "%d", &array.items[numberIndex]);
     }
     fclose(contentFile);
 
-    addNumber(numbers, &numberCount, 10);
+    addNumber(&array, 10);
 
-    printNumbers(stdout, numbers, numberCount, capacity);
+    printNumbers(stdout, array);
 
     debug_print("saving current content to file");
     contentFile = fopen(contentFilePath, "w");
@@ -74,10 +102,10 @@ int main(void) {
         fprintf(stderr, "Failed opening file '%s'\n", contentFilePath);
         return 1;
     }
-    printNumbers(contentFile, numbers, numberCount, capacity);
+    printNumbers(contentFile, array);
 
     debug_print("terminating");
-    free(numbers);
+    free(array.items);
     fclose(contentFile);
     return 0;
 }
