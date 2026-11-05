@@ -36,6 +36,25 @@ typedef struct {
     void (*run)(NumbersRef);
 } OptionItem;
 
+bool numbers_ctor(NumbersRef numbers, int capacity) {
+    numbers->count = 0;
+    numbers->items = malloc(capacity * sizeof(*numbers->items));
+    if (numbers->items == NULL) {
+        numbers->capacity = 0;
+        return false;
+    }
+
+    numbers->capacity = capacity;
+    return true;
+}
+
+void numbers_dtor(NumbersRef numbers) {
+    free(numbers->items);
+    numbers->items = NULL;
+    numbers->capacity = 0;
+    numbers->count = 0;
+}
+
 void printNumbers(FILE *dst, Numbers array) {
     debug_print("printing contents");
     fprintf(dst, "(%d/%d) ", array.count, array.capacity);
@@ -45,9 +64,23 @@ void printNumbers(FILE *dst, Numbers array) {
     fprintf(dst, "\n");
 }
 
-void addNumber(NumbersRef array, int numberToAdd) {
+bool addNumber(NumbersRef array, int numberToAdd) {
     debug_printf("adding number %d, current count = %d", numberToAdd, array->count);
+    if (array->count >= array->capacity) {
+        int newCapacity = array->capacity * 2;
+        int *newItems = realloc(array->items, newCapacity * sizeof(*array->items));
+        if (newItems == NULL) {
+            debug_printf("failed reallocating items to new capacity %d -> %d", array->capacity, newCapacity);
+            return false;
+        }
+
+        array->capacity = newCapacity;
+        array->items = newItems;
+    }
+
     array->items[array->count++] = numberToAdd;
+    return true;
+    ;
 }
 
 void addNumberInteractive(NumbersRef array) {
@@ -57,10 +90,10 @@ void addNumberInteractive(NumbersRef array) {
     addNumber(array, input);
 }
 
-void removeNumber(NumbersRef array, int indexToRemove) {
+bool removeNumber(NumbersRef array, int indexToRemove) {
     debug_printf("removing number on index %d, current count = %d", indexToRemove, array->count);
     if (indexToRemove < 0 || indexToRemove >= array->count) {
-        return;
+        return false;
     }
 
     for (int index = indexToRemove; index < array->count - 1; index++) {
@@ -68,6 +101,20 @@ void removeNumber(NumbersRef array, int indexToRemove) {
     }
 
     array->count--;
+
+    if (array->count < array->capacity / 2) {
+        int newCapacity = array->capacity / 2;
+        int *newItems = realloc(array->items, newCapacity * sizeof(*array->items));
+        if (newItems == NULL) {
+            debug_printf("failed reallocating items to new capacity %d -> %d", array->capacity, newCapacity);
+            return false;
+        }
+
+        array->capacity = newCapacity;
+        array->items = newItems;
+    }
+
+    return true;
 }
 
 void removeNumberInteractive(NumbersRef array) {
@@ -115,8 +162,7 @@ int main(void) {
     fscanf(contentFile, "(%d/%d) ", &array.count, &array.capacity);
 
     debug_print("loading items from file");
-    array.items = malloc(array.capacity * sizeof(int));
-    if (array.items == NULL) {
+    if (!numbers_ctor(&array, array.capacity)) {
         fprintf(stderr, "Allocation failed\n");
         fclose(contentFile);
         return 1;
@@ -143,10 +189,10 @@ int main(void) {
         printf("9) Exit\n");
         printf("Enter an option number: ");
         scanf("%d", &option);
-        option--;
+        int optionIndex = option - 1;
 
-        if (option >= 0 && option < OPTION_COUNT) {
-            OptionItem optionItem = options[option];
+        if (optionIndex >= 0 && optionIndex < OPTION_COUNT) {
+            OptionItem optionItem = options[optionIndex];
             optionItem.run(&array);
         }
 
@@ -172,7 +218,7 @@ int main(void) {
     printNumbers(contentFile, array);
 
     debug_print("terminating");
-    free(array.items);
+    numbers_dtor(&array);
     fclose(contentFile);
     return 0;
 }
