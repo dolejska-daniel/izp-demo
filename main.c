@@ -18,12 +18,6 @@
 
 #define CAPACITY 5
 
-struct tree_node_t {
-    int value;
-    struct tree_node_t *left;
-    struct tree_node_t *right;
-};
-
 typedef struct {
     int *items;
     int count;
