@@ -2,3 +2,6 @@
 /main-debug
 /factorial
 *.out
+*.o
+*.a
+*.so

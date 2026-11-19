@@ -1,3 +1,6 @@
+#include "numbers.h"
+#include "numbers_processor.h"
+#include <dlfcn.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,18 +20,6 @@
 #endif
 
 #define CAPACITY 5
-
-typedef struct {
-    int *items;
-    int count;
-    int capacity;
-} Numbers;
-typedef Numbers *NumbersRef;
-
-typedef struct {
-    char *description;
-    void (*run)(NumbersRef);
-} OptionItem;
 
 bool numbers_ctor(NumbersRef numbers, int capacity) {
     numbers->count = 0;
@@ -121,7 +112,7 @@ void removeNumberInteractive(NumbersRef array) {
     removeNumber(array, input);
 }
 
-#define OPTION_COUNT 4
+#define OPTION_COUNT 3
 
 int main(void) {
     char *contentFilePath = "content.txt";
@@ -167,10 +158,12 @@ int main(void) {
     }
     fclose(contentFile);
 
+    void *lib = dlopen("numbers.so", RTLD_NOW);
+    void (*lib_fn)(NumbersRef) = (void (*)(NumbersRef))dlsym(lib, "process_numbers");
+
     OptionItem options[OPTION_COUNT] = {{.description = "Add a number", .run = &addNumberInteractive},
                                         {.description = "Remove a number", .run = &removeNumberInteractive},
-                                        {.description = "Remove a number", .run = &removeNumberInteractive},
-                                        {.description = "Remove a number", .run = &removeNumberInteractive}};
+                                        {.description = "Run library", .run = lib_fn}};
 
     while (true) {
         int option;
@@ -188,6 +181,7 @@ int main(void) {
         if (optionIndex >= 0 && optionIndex < OPTION_COUNT) {
             OptionItem optionItem = options[optionIndex];
             optionItem.run(&array);
+            continue;
         }
 
         switch (option) {
@@ -214,5 +208,6 @@ int main(void) {
     debug_print("terminating");
     numbers_dtor(&array);
     fclose(contentFile);
+    dlclose(lib);
     return 0;
 }
